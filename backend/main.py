@@ -14,7 +14,7 @@ CORS(app)
 
 ABSTRACTS_FOLDER = "abstracts"
 INDEX_FOLDER = "index"
-ALPHA = 0.05  # For Normal Search
+ALPHA = 0.001  # For Normal Search
 
 # Load Index Files
 with open(f"{INDEX_FOLDER}/tf_idf_vectors.pkl", "rb") as f:
