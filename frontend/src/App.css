@@ -5,7 +5,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Poppins", sans-serif;
-  background: linear-gradient(to right, #992b17, #bc6a0c);
+  background: linear-gradient(to right, #841271, #6b0649);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -79,7 +79,7 @@ body {
 
 /* Animated Search Button */
 .search-button {
-  background: linear-gradient(135deg, #ff8a00, #e52e71);
+  background: linear-gradient(135deg, #780b55, #e52eae);
   color: #fff;
   border: none;
   padding: 12px 20px;

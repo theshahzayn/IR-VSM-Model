@@ -111,11 +111,12 @@ function App() {
         setResults([]);
       } else {
         setResults(
-          response.data.results.map((docId) => ({
-            id: docId,
-            snippet: response.data.snippets[docId] || "Snippet not available",
+          response.data.results.map((doc) => ({
+             id: doc.doc_id,
+             score: doc.score,
+             snippet: response.data.snippets[doc.doc_id] || "Snippet not available",
           }))
-        );
+       );
       }
     } catch (err) {
       setError("Error fetching results.");
@@ -148,7 +149,7 @@ function App() {
         transition={{ duration: 0.5 }}
         className="search-box"
       >
-        <h1 className="title">ShahQuery</h1>
+        <h1 className="title">ShahQuery v2</h1>
 
         <div className="input-group-container">
           <div className="input-group">
@@ -215,7 +216,8 @@ function App() {
             >
               {results.map((doc) => (
                 <li key={doc.id} className="result-item" onClick={() => fetchFullDocument(doc.id)}>
-                  <strong className="result-id">📄 Document ID:</strong> {doc.id}
+                  <strong className="result-id">Document ID:</strong> {doc.id} | 
+                  <strong className="result-score"> Score:</strong> {doc.score}
                   <p className="result-snippet" dangerouslySetInnerHTML={{ __html: doc.snippet }} />
                 </li>
               ))}

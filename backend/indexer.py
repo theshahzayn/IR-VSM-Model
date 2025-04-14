@@ -1,102 +1,91 @@
 import os
 import re
 import json
-from collections import defaultdict
-from nltk.stem import PorterStemmer
+import pickle
+from collections import defaultdict, Counter
+from math import log
+from preprocessing import Preprocessor
 
-# Whether to use stemming or not
-USE_STEMMING = True
-stemmer = PorterStemmer()
 
-def load_stopwords(filepath):
-    with open(filepath, 'r') as file:
-        return set(file.read().split())
+class Indexer:
+    def __init__(self, preprocessor):
+        self.preprocessor = preprocessor
 
-# Preprocess text 
+        self.inverted_index = defaultdict(set)
+        self.positional_index = defaultdict(lambda: defaultdict(list))
+        self.tf_idf_vectors = {}
+        self.raw_tf = {}
+        self.df = defaultdict(int)
+        self.dictionary = set()
+        self.doc_count = 0
 
-# lowering text, removing stopwords, and applying stemming
-def preprocess_text(text, stopwords):
-    text = text.lower()
+    def index_documents(self, abstracts_dir, stopwords):
+        for filename in sorted(os.listdir(abstracts_dir)):
+            filepath = os.path.join(abstracts_dir, filename)
+            try:
+                doc_id = int(os.path.splitext(filename)[0])
+            except ValueError:
+                doc_id = filename
 
-    words = re.findall(r'\b\w+\b', text)
+            self.doc_count += 1
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+                words = self.preprocessor.preprocess(file.read(), stopwords)
 
-    if USE_STEMMING:
-        return [stemmer.stem(word) for word in words if word not in stopwords]
-    else:
-        return [word for word in words if word not in stopwords]
+                tf = Counter(words)
+                self.raw_tf[doc_id] = tf
 
-# Building Inverted and Positional Indexes
-def build_indexes(abstracts_dir, stopwords):
-    inverted_index = defaultdict(set)
-    positional_index = defaultdict(lambda: defaultdict(list))
-    dictionary = set()  # Store unique terms in a set
-    term_frequency = defaultdict(int)  # Term frequency across all documents
-    doc_count = 0
-    
-    for filename in sorted(os.listdir(abstracts_dir)):
-        filepath = os.path.join(abstracts_dir, filename)
-        try:
-            doc_id = int(os.path.splitext(filename)[0])
-        except ValueError:
-            doc_id = filename
-        
-        doc_count += 1
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
-            words = preprocess_text(file.read(), stopwords)
-            # Add unique words to the dictionary set and calculate term frequency
-            for word in words:
-                dictionary.add(word)
-                term_frequency[word] += 1
-                inverted_index[word].add(doc_id)
-                positional_index[word][doc_id].append(words.index(word))
-    
-    # Additional statistics
-    stats = {
-        'total_unique_terms': len(dictionary),
-        'total_documents': doc_count,
-        'term_frequency': term_frequency
-    }
-    
-    return inverted_index, positional_index, dictionary, stats
+                for pos, word in enumerate(words):
+                    self.dictionary.add(word)
+                    self.df[word] += 1
+                    self.inverted_index[word].add(doc_id)
+                    self.positional_index[word][doc_id].append(pos)
 
-# Save Inverted Index 
-def save_inverted_index(index, filename):
-    with open(filename, 'w') as file:
-        json.dump({key: list(value) for key, value in index.items()}, file, indent=4)
+        self.compute_tf_idf()
 
-# Save Positional Index 
-def save_positional_index(index, filename):
-    out = {}
-    for term, doc_dict in index.items():
-        out[term] = {str(doc_id): positions for doc_id, positions in doc_dict.items()}
-    with open(filename, 'w') as file:
-        json.dump(out, file, indent=4)
+    def compute_tf_idf(self):
+        N = self.doc_count
+        for doc_id, tf in self.raw_tf.items():
+            tf_idf = {}
+            for term, freq in tf.items():
+                idf = log(N / self.df[term])
+                tf_idf[term] = freq * idf
+            self.tf_idf_vectors[doc_id] = tf_idf
 
-# Save Dictionary Terms and Statistics
-def save_dictionary(dictionary, stats, filename):
-    output = {
-        'dictionary_terms': list(dictionary),  # Only the unique terms
-        'statistics': stats  # Including additional statistics
-    }
-    with open(filename, 'w') as file:
-        json.dump(output, file, indent=4)
+    def save_all(self, folder="index"):
+        os.makedirs(folder, exist_ok=True)
 
-def main():
-    stopwords_path = "Stopword-List.txt"
-    abstracts_dir = "Abstracts"
-    
-    # Load stopwords
-    stopwords = load_stopwords(stopwords_path)
-    
-    # Build indexes
-    inverted_index, positional_index, dictionary, stats = build_indexes(abstracts_dir, stopwords)
-    
-    # Save the indexes and dictionary in separate files
-    save_inverted_index(inverted_index, "inverted_index.json")
-    save_positional_index(positional_index, "positional_index.json")
-    save_dictionary(dictionary, stats, "dictionary_terms_with_stats.json")
-    
-    print("Indexes and dictionary saved successfully!")
+        with open(f"{folder}/inverted_index.json", 'w') as f:
+            json.dump({k: list(v) for k, v in self.inverted_index.items()}, f, indent=4)
+
+        with open(f"{folder}/positional_index.json", 'w') as f:
+            json.dump({k: {str(d): p for d, p in v.items()} for k, v in self.positional_index.items()}, f, indent=4)
+
+        with open(f"{folder}/dictionary.json", 'w') as f:
+            stats = {
+                'total_unique_terms': len(self.dictionary),
+                'total_documents': self.doc_count,
+                'document_frequency': dict(self.df)
+            }
+            json.dump({'dictionary_terms': list(self.dictionary), 'statistics': stats}, f, indent=4)
+
+        with open(f"{folder}/tf_idf_vectors.pkl", 'wb') as f:
+            pickle.dump(self.tf_idf_vectors, f)
+
+
+# --------------------------- #
+# MAIN FUNCTION TO RUN INDEXER
+# --------------------------- #
 
 if __name__ == "__main__":
-    main()
+    stopwords_path = "stopwords.txt"
+    abstracts_dir = "abstracts/"
+
+    print("Indexing in Progress...")
+
+    preprocessor = Preprocessor(stopwords_path)
+    indexer = Indexer(preprocessor)
+
+    indexer.index_documents(abstracts_dir, preprocessor.stop_words)
+    indexer.save_all()
+
+    print("All Indexes Created Successfully & Saved!")
