@@ -1,4 +1,6 @@
-# IR-VSM Model 🔍
+![image](https://github.com/user-attachments/assets/a8e99165-f380-4825-ab2f-bc9e11f9ce38)
+
+# IR-VSM Model 
 
 This project implements a **Vector Space Model (VSM)** based Information Retrieval system using TF-IDF weighting and cosine similarity. It includes support for phrase queries, ranked results, and a clean web interface powered by Flask (backend) and React (frontend).
 
@@ -8,22 +10,19 @@ This project implements a **Vector Space Model (VSM)** based Information Retriev
 
 - A set of 448 research paper abstracts (`abstracts/` folder)
 - Custom stopword list (`stopwords.txt`)
-- Gold standard queries for evaluation
 
 ---
 
 ## ⚙️ Features
 
 ✅ TF-IDF Vectorization  
-✅ Cosine Similarity Based Ranking  
+✅ Cosine Similarity-Based Ranking  
 ✅ Phrase Query Support (using Positional Index)  
 ✅ Stopword Removal, Lemmatization  
 ✅ Query Suggestions via Fuzzy Matching  
-✅ Gold Query Mode with Boolean Filtering  
 ✅ Flask REST API  
-✅ React Frontend with Modal Viewer  
+✅ React Frontend 
 ✅ Snippets with Highlighted Terms  
-✅ Alpha Threshold Filtering (`default = 0.05`)
 
 ---
 
@@ -93,11 +92,3 @@ Returns full abstract content.
 - **Due Date**: April 15, 2025  
 - **Student**: Shahzain Zaidi  
 - **University**: FAST-NUCES Karachi  
-
----
-
-## 📬 Contact
-
-For issues or feedback:  
-📧 [Your Email]  
-🔗 [Your LinkedIn]  
