@@ -70,8 +70,14 @@ Supports:
 ### `GET /suggest?query=term`
 Returns autocomplete suggestions.
 
+![image](https://github.com/user-attachments/assets/897a900b-c8d7-4660-b25a-d6cca6bc7773)
+
+
 ### `GET /document?doc_id=123`
 Returns full abstract content.
+
+![image](https://github.com/user-attachments/assets/aa6c843a-4760-4b59-9360-5eb03976f75c)
+
 
 ---
 
